@@ -1,0 +1,55 @@
+import os
+import librosa
+import numpy as np
+import soundfile as sf
+
+# Specify the path to your audio file
+audio_path = r'C:\Users\Adamt\Desktop\what1\wah.wav'
+
+# Check if the audio file exists
+if not os.path.exists(audio_path):
+    print(f"Error: The audio file {audio_path} does not exist.")
+    exit()
+
+# Load the audio file
+try:
+    y, sr = librosa.load(audio_path, sr=None)
+except Exception as e:
+    print(f"Error loading audio file: {e}")
+    exit()
+
+# Detect the onsets
+onsets = librosa.onset.onset_detect(y=y, sr=sr, backtrack=True)
+
+# Convert frame indices to sample indices
+onset_samples = librosa.frames_to_samples(onsets)
+
+# Define the duration of each segment (in seconds)
+segment_duration = 0.5  # Adjust this duration as needed
+
+# Ensure the output directory exists
+output_dir = r'C:\Users\Adamt\Desktop\what'
+os.makedirs(output_dir, exist_ok=True)
+
+# Extract and save each segment
+for i, onset_sample in enumerate(onset_samples):
+    # Calculate the start and end sample indices
+    start_sample = onset_sample
+    end_sample = start_sample + int(segment_duration * sr)
+
+    # Ensure end_sample does not exceed the length of the audio
+    end_sample = min(end_sample, len(y))
+
+    # Extract the segment
+    segment = y[start_sample:end_sample]
+
+    # Define the output file path
+    output_file_path = os.path.join(output_dir, f'onset_{i+1}.wav')
+
+    # Save the segment as a WAV file
+    try:
+        sf.write(output_file_path, segment, sr)
+    except Exception as e:
+        print(f"Error saving {output_file_path}: {e}")
+
+print(f"Onset segments saved in the directory: {output_dir}")
